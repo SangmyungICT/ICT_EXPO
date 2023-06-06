@@ -1,72 +1,72 @@
-// import { StatusBar } from 'expo-status-bar';
-// import { useState } from 'react';
-// import { Button, StyleSheet, Text, View, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Platform, StyleSheet, Button, View, Text } from 'react-native';
+import { WebView } from 'react-native-webview';
+import Constants from 'expo-constants';
+import * as Location from 'expo-location';
 
-// export default function App() {
-//   const [test, setTest] = useState(false);
-//   const handleTest = () => setTest(!test);
-//   return (
-//     <View style={styles.container}>
-//       <Text>테스트!!!</Text>
-//       <Button title='버튼테스트' color='black' onPress={handleTest} />
-//       <Text style={{ display: test ? 'block' : 'none' }}>버튼 눌려짐</Text>
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    marginTop: Constants.statusBarHeight,
+  },
+});
 
-//       <StatusBar style='auto' />
-//     </View>
-//   );
-// }
-import React from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+export default function App() {
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-const logo = {
-  uri: 'https://reactnative.dev/img/tiny_logo.png',
-  width: 64,
-  height: 64,
-};
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
 
-const App = () => (
-  <View>
-    <Text style={{ fontSize: 96 }}>Scroll me plz</Text>
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Text style={{ fontSize: 96 }}>If you like</Text>
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Text style={{ fontSize: 96 }}>Scrolling down</Text>
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Text style={{ fontSize: 96 }}>What's the best</Text>
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Text style={{ fontSize: 96 }}>Framework around?</Text>
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Image source={logo} />
-    <Text style={{ fontSize: 80 }}>React Native</Text>
-  </View>
-);
+      let location = await Location.getCurrentPositionAsync({});
 
-export default App;
+      if (location) {
+        setLocation({ data: location, type: 'position' });
+      } else {
+        alert('error 발생');
+      }
+    })();
+  }, []);
 
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#fff',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//   },
-// });
+  const webViewRef = useRef();
+  const sendMessageToWeb = () => {
+    webViewRef.current.postMessage(JSON.stringify(location));
+  };
+
+  return (
+    <>
+      <WebView
+        style={styles.container}
+        ref={webViewRef}
+        source={{ uri: 'https://sscetch-15b24.web.app/' }}
+        javaScriptEnabled={true}
+      />
+      <View
+        style={{
+          marginBottom: 40,
+          marginTop: 10,
+          backgroundColor: '#0f0',
+          maxHeight: '8%',
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: 20,
+          opacity: 0.7,
+          margin: 20,
+        }}
+      >
+        <Button
+          style={{ width: '100%' }}
+          color='white'
+          title='현재 위치로 이동하기'
+          onPress={sendMessageToWeb}
+        ></Button>
+      </View>
+    </>
+  );
+}
